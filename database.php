@@ -9,7 +9,7 @@ function db(): PDO
     }
 
     $host = getenv('ORBITA_DB_HOST') ?: '127.0.0.1';
-    $port = getenv('ORBITA_DB_PORT') ?: '3306';
+    $port = getenv('ORBITA_DB_PORT') ?: '3308';
     $name = getenv('ORBITA_DB_NAME') ?: 'orbita_numeros';
     $user = getenv('ORBITA_DB_USER') ?: 'root';
     $password = getenv('ORBITA_DB_PASSWORD') ?: '';
