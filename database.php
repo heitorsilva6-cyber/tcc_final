@@ -8,42 +8,48 @@ function db(): PDO
         return $pdo;
     }
 
-    $dataDir = __DIR__ . DIRECTORY_SEPARATOR . 'data';
-    if (!is_dir($dataDir)) {
-        mkdir($dataDir, 0777, true);
-    }
+    $host = getenv('ORBITA_DB_HOST') ?: '127.0.0.1';
+    $port = getenv('ORBITA_DB_PORT') ?: '3306';
+    $name = getenv('ORBITA_DB_NAME') ?: 'orbita_numeros';
+    $user = getenv('ORBITA_DB_USER') ?: 'root';
+    $password = getenv('ORBITA_DB_PASSWORD') ?: '';
 
-    $pdo = new PDO('sqlite:' . $dataDir . DIRECTORY_SEPARATOR . 'orbitanumeros.sqlite');
+    $pdo = new PDO(
+        "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
+        $user,
+        $password,
+        [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"]
+    );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->exec('PRAGMA foreign_keys = ON');
     $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    avatar TEXT NOT NULL DEFAULT 'astronauta',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    email VARCHAR(190) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    avatar VARCHAR(40) NOT NULL DEFAULT 'astronauta',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS attempts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    game_key TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    correct INTEGER NOT NULL,
-    total INTEGER NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    game_key VARCHAR(40) NOT NULL,
+    score INT NOT NULL,
+    correct INT NOT NULL,
+    total INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT attempts_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX attempts_user_idx (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS badges (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    badge_key TEXT NOT NULL,
-    unlocked_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, badge_key),
-    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    badge_key VARCHAR(40) NOT NULL,
+    unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY user_badge_unique (user_id, badge_key),
+    CONSTRAINT badges_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
     return $pdo;
 }

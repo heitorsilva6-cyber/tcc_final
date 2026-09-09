@@ -74,7 +74,7 @@ try {
         foreach ($definitions as [$key, $label, $description]) {
             $eligible = ($key === 'first-flight' && userStats((int)$user['id'])['rounds'] === 1) || ($key === 'perfect' && $correct === $total) || ($key === 'explorer' && count(array_unique(array_column($pdo->query('SELECT game_key FROM attempts WHERE user_id = ' . (int)$user['id'])->fetchAll(), 'game_key'))) >= 4);
             if ($eligible) {
-                $check = $pdo->prepare('INSERT OR IGNORE INTO badges (user_id, badge_key) VALUES (?, ?)');
+                $check = $pdo->prepare('INSERT IGNORE INTO badges (user_id, badge_key) VALUES (?, ?)');
                 $check->execute([$user['id'], $key]);
                 if ($check->rowCount() > 0) $newBadges[] = ['key' => $key, 'label' => $label, 'description' => $description];
             }
