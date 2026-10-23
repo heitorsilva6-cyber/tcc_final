@@ -115,7 +115,7 @@ try {
 } catch (Throwable $error) {
     error_log((string) $error);
 
-    $message = 'Não foi possível concluir a operação. Confira se o MySQL do Laragon está iniciado e se o banco orbita_numeros existe.';
+    $message = 'Não foi possível acessar o banco MySQL. Confira o host, a porta, o nome do banco, o usuário e a senha configurados em config.php.';
     $response = ['error' => $message];
 
     if (filter_var(getenv('APP_DEBUG') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
