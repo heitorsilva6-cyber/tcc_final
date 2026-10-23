@@ -11,15 +11,17 @@ Aplicação web full-stack de aprendizagem gamificada para **Operações com Nú
 ```
 
 2. Acesse `http://127.0.0.1:8080`.
-3. No HeidiSQL ou phpMyAdmin, crie o banco MySQL:
+3. No Laragon, inicie o MySQL. No HeidiSQL ou phpMyAdmin, crie o banco MySQL:
 
 ```sql
 CREATE DATABASE orbita_numeros CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-4. Crie uma conta. As tabelas `users`, `attempts` e `badges` são criadas automaticamente na primeira requisição.
+4. Abra o site pelo endereço local do Laragon (por exemplo, `http://tcc_final.test`) ou pelo servidor PHP acima. Crie uma conta. As tabelas `users`, `attempts` e `badges` são criadas automaticamente na primeira requisição.
 
-Neste ambiente Laragon, a porta configurada é `3308`. Se o seu Laragon usar outra porta ou se o banco tiver outro nome, defina `ORBITA_DB_PORT` ou `ORBITA_DB_NAME` antes de iniciar o PHP. Também é possível alterar host, usuário e senha com `ORBITA_DB_HOST`, `ORBITA_DB_USER` e `ORBITA_DB_PASSWORD`.
+Por padrão, a conexão local usa `127.0.0.1`, porta `3308`, banco `orbita_numeros`, usuário `root` e senha vazia. Para InfinityFree, preencha `db_host`, `db_port`, `db_name`, `db_user` e `db_password` em `config.php` com os dados exibidos no painel. As variáveis de ambiente `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` e `DB_PASSWORD` continuam podendo substituir essa configuração.
+
+Para hospedar em InfinityFree, configure essas variáveis com as credenciais do banco exibidas no painel do host; os padrões deste arquivo são para Laragon local.
 
 ## Arquitetura
 

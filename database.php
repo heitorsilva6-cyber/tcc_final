@@ -8,21 +8,25 @@ function db(): PDO
         return $pdo;
     }
 
-    $host = getenv('ORBITA_DB_HOST') ?: '127.0.0.1';
-    $port = getenv('ORBITA_DB_PORT') ?: '3308';
-    $name = getenv('ORBITA_DB_NAME') ?: 'orbita_numeros';
-    $user = getenv('ORBITA_DB_USER') ?: 'root';
-    $password = getenv('ORBITA_DB_PASSWORD') ?: '';
+    $config = require __DIR__ . '/config.php';
+    $host = getenv('DB_HOST') ?: getenv('ORBITA_DB_HOST') ?: ($config['db_host'] ?: '127.0.0.1');
+    $port = getenv('DB_PORT') ?: getenv('ORBITA_DB_PORT') ?: ($config['db_port'] ?: '3308');
+    $name = getenv('DB_NAME') ?: getenv('ORBITA_DB_NAME') ?: ($config['db_name'] ?: 'orbita_numeros');
+    $user = getenv('DB_USER') ?: getenv('DB_USERNAME') ?: getenv('ORBITA_DB_USER') ?: ($config['db_user'] ?: 'root');
+    $password = getenv('DB_PASSWORD') ?: getenv('ORBITA_DB_PASSWORD') ?: $config['db_password'];
 
-    $pdo = new PDO(
-        "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
-        $user,
-        $password,
-        [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"]
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->exec(<<<'SQL'
+    try {
+        $pdo = new PDO(
+            "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
+            $user,
+            $password,
+            [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"]
+        );
+
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+        $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
@@ -31,6 +35,9 @@ CREATE TABLE IF NOT EXISTS users (
     avatar VARCHAR(40) NOT NULL DEFAULT 'astronauta',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQL);
+
+        $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS attempts (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
@@ -42,6 +49,9 @@ CREATE TABLE IF NOT EXISTS attempts (
     CONSTRAINT attempts_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX attempts_user_idx (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQL);
+
+        $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS badges (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
@@ -51,6 +61,11 @@ CREATE TABLE IF NOT EXISTS badges (
     CONSTRAINT badges_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
+    } catch (Throwable $e) {
+        $pdo = null;
+        throw $e;
+    }
+
     return $pdo;
 }
 
@@ -59,6 +74,7 @@ function currentUser(): ?array
     if (empty($_SESSION['user_id'])) {
         return null;
     }
+
     $stmt = db()->prepare('SELECT id, name, email, avatar, created_at FROM users WHERE id = ?');
     $stmt->execute([$_SESSION['user_id']]);
     return $stmt->fetch() ?: null;
@@ -67,13 +83,17 @@ function currentUser(): ?array
 function userStats(int $userId): array
 {
     $pdo = db();
+
     $summary = $pdo->prepare('SELECT COALESCE(SUM(score), 0) AS points, COALESCE(SUM(correct), 0) AS correct, COALESCE(SUM(total), 0) AS total, COUNT(*) AS rounds FROM attempts WHERE user_id = ?');
     $summary->execute([$userId]);
     $stats = $summary->fetch();
+
     $badges = $pdo->prepare('SELECT badge_key, unlocked_at FROM badges WHERE user_id = ? ORDER BY unlocked_at DESC');
     $badges->execute([$userId]);
+
     $history = $pdo->prepare('SELECT game_key, score, correct, total, created_at FROM attempts WHERE user_id = ? ORDER BY id DESC LIMIT 8');
     $history->execute([$userId]);
+
     return [
         'points' => (int)$stats['points'],
         'correct' => (int)$stats['correct'],

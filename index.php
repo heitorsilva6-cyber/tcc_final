@@ -18,6 +18,16 @@
     </section>
   </div>
   <div id="appView" class="app-shell hidden"><aside class="sidebar"><div class="brand"><span class="brand-mark">∓</span><span>ÓRBITA<br><b>DOS NÚMEROS</b></span></div><nav><button class="nav-item active" data-page="home"><span>⌂</span> Hub de missão</button><button class="nav-item" data-page="games"><span>✦</span> Jogos</button><button class="nav-item" data-page="profile"><span>◉</span> Meu progresso</button><button class="nav-item" data-page="ranking"><span>♜</span> Ranking</button></nav><div class="side-footer"><div class="mini-avatar">✦</div><div><strong id="sideName">Astronauta</strong><small>Cadete em treinamento</small></div><button id="logoutBtn" class="icon-button" title="Sair">↪</button></div></aside><main class="main"><header class="topbar"><button id="mobileMenu" class="mobile-menu">☰</button><div><span class="top-kicker">CENTRO DE CONTROLE / <span id="pageLabel">HUB DE MISSÃO</span></span><h2 id="pageTitle">Olá, cadete.</h2></div><div class="top-actions"><div class="streak"><span>✹</span><b id="streakValue">0</b><small>dias de foco</small></div><div class="top-avatar">✦</div></div></header><div id="pageContent"></div></main></div>
-  <script src="app.js"></script>
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
+    </div>
+  </div>
+  <script src="app.js?v=<?= filemtime(__DIR__ . '/app.js') ?>"></script>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+  <script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+  </script>
 </body>
 </html>

@@ -1,9 +1,27 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+ob_start();
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/database.php';
+register_shutdown_function(static function (): void {
+    $error = error_get_last();
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+
+    if ($error !== null && in_array($error['type'], $fatalTypes, true)) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => 'Erro interno no servidor. Verifique os arquivos PHP e a configuração do banco.']);
+    }
+});
+
+session_start();
 
 function input(): array
 {
@@ -12,8 +30,12 @@ function input(): array
 }
 function respond(array $data, int $status = 200): never
 {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     http_response_code($status);
-    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
 function requireUser(): array
@@ -24,6 +46,8 @@ function requireUser(): array
 }
 
 try {
+    require_once __DIR__ . '/database.php';
+
     $action = $_GET['action'] ?? 'me';
     $data = input();
     $pdo = db();
@@ -89,5 +113,14 @@ try {
 
     respond(['error' => 'Ação desconhecida.'], 404);
 } catch (Throwable $error) {
-    respond(['error' => 'Não foi possível concluir a operação agora.', 'detail' => $error->getMessage()], 500);
+    error_log((string) $error);
+
+    $message = 'Não foi possível concluir a operação. Confira se o MySQL do Laragon está iniciado e se o banco orbita_numeros existe.';
+    $response = ['error' => $message];
+
+    if (filter_var(getenv('APP_DEBUG') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
+        $response['detail'] = $error->getMessage();
+    }
+
+    respond($response, 500);
 }
