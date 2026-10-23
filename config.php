@@ -7,5 +7,5 @@ return [
     'db_port' => '3308',
     'db_name' => '__DB_NAME__',
     'db_user' => '__DB_USER__',
-    'db_password' => '__DB_PASS__',
+    'db_password' => '__DB_PASSWORD__',
 ];
