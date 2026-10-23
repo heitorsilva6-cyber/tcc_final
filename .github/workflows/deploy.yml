@@ -15,11 +15,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Substituir variaveis de ambiente no config.php
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
         run: |
-          sed -i "s/__DB_HOST__/${{ secrets.DB_HOST }}/g" config.php
-          sed -i "s/__DB_NAME__/${{ secrets.DB_NAME }}/g" config.php
-          sed -i "s/__DB_USER__/${{ secrets.DB_USER }}/g" config.php
-          sed -i "s/__DB_PASS__/${{ secrets.DB_PASS }}/g" config.php
+          sed -i "s|__DB_HOST__|${DB_HOST}|g" config.php
+          sed -i "s|__DB_NAME__|${DB_NAME}|g" config.php
+          sed -i "s|__DB_USER__|${DB_USER}|g" config.php
+          sed -i "s|__DB_PASS__|${DB_PASS}|g" config.php
 
       - name: Publicar via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
